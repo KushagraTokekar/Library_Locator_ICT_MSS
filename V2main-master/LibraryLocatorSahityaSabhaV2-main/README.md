@@ -23,19 +23,21 @@ mysql -u root -proot < database/mssindor_yiilibrary.sql
 ```
 > Replace `-proot` with your actual MySQL password, e.g. `-pmypassword`
 
-### 3. Run the backend
+### 3. Configure backend environment
 ```bash
 cd Backend
-npm install
-node server.js
-```
-You should see:
-```
-[SERVER] Running on port 3000
-[DB] MySQL connected.
+cp .env.example .env
+# edit .env and set real DB_HOST/DB_USER/DB_PASS/DB_NAME + JWT/EMAIL values
 ```
 
-### 4. Update the API URL
+### 4. Run the backend
+```bash
+npm install
+npm start
+```
+If required DB variables are missing, startup now prints exactly which keys are missing and how to fix them.
+
+### 5. Update the API URL
 Open `Mobile-app/constants/api.ts` and set your machine's IP:
 ```ts
 export const API_BASE = "http://localhost:3000"; // web only
@@ -43,7 +45,7 @@ export const API_BASE = "http://localhost:3000"; // web only
 export const API_BASE = "http://192.168.X.X:3000"; // get IP from ipconfig
 ```
 
-### 5. Run the app
+### 6. Run the app
 ```bash
 cd Mobile-app
 npm install
