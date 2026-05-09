@@ -1040,6 +1040,8 @@ app.get("/search", requireAuth, (req, res) => {
 
     SELECT
 
+      oldbookid,
+
       bookname,
 
       bookauthor,
@@ -1107,6 +1109,8 @@ app.get("/books", requireAuth, (req, res) => {
     `
 
     SELECT
+
+      oldbookid,
 
       bookname,
 

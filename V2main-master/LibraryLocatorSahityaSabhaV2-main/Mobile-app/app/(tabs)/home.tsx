@@ -30,6 +30,7 @@ const getRecentSearchesKey = (userId?: number | string | null) =>
     : `recent_searches_${userId}`;
 
 type Book = {
+  oldbookid?: string;
   bookname: string;
   bookauthor: string;
   bookpublisher: string;
@@ -298,6 +299,7 @@ export default function Home() {
                   </Text>
                   <Text style={{ color: theme.icon, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
                     {item.bookauthor} · {item.subject}
+                    {item.oldbookid ? ` · Old ID: ${item.oldbookid}` : ""}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={14} color={theme.border} />
@@ -347,6 +349,18 @@ export default function Home() {
                 <Text style={[styles.infoValue, { color: theme.text }]}>{result.bookpublisher}</Text>
               </View>
             </View>
+
+            {result.oldbookid ? (
+              <View style={styles.infoRow}>
+                <View style={[styles.infoIcon, { backgroundColor: theme.background }]}>
+                  <Ionicons name="pricetag-outline" size={15} color={theme.tint} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.infoLabel, { color: theme.icon }]}>Old Book ID</Text>
+                  <Text style={[styles.infoValue, { color: theme.text }]}>{result.oldbookid}</Text>
+                </View>
+              </View>
+            ) : null}
 
             <TouchableOpacity
               style={[styles.shelfContainer, { backgroundColor: theme.tint }]}
