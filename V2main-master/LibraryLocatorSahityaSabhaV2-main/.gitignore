@@ -1,0 +1,42 @@
+node_modules/
+.env
+.env.*
+.expo/
+dist/
+build/
+*.log
+
+
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*
+
+# Node modules anywhere
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Database dumps
+*.sql
+
+# VSCode
+.vscode/
+
+# Expo temp
+.expo/
+
+# npm
+package-lock.json
+yarn.lock
