@@ -1033,12 +1033,15 @@ app.get("/search", requireAuth, (req, res) => {
   }
 
   const pattern = `%${term}%`;
+  console.log("[SEARCH] Request", { userId: req.user?.id, term });
 
   db.query(
 
     `
 
     SELECT
+
+      oldbookid,
 
       bookname,
 
@@ -1073,10 +1076,24 @@ app.get("/search", requireAuth, (req, res) => {
     (err, results) => {
 
       if (err) {
+        logError("SEARCH_QUERY", err, { userId: req.user?.id, term });
 
         return sendSilentError(res, 500, "SEARCH", err);
 
       }
+
+      if (!Array.isArray(results)) {
+        logError("SEARCH_RESULTS_INVALID", new Error("Search results are not an array"), {
+          userId: req.user?.id,
+          term,
+        });
+        return res.status(500).json({
+          success: false,
+          message: "Invalid search response from server",
+        });
+      }
+
+      console.log("[SEARCH] Success", { userId: req.user?.id, term, count: results.length });
 
       return res.json({
 
@@ -1100,13 +1117,30 @@ app.get("/books", requireAuth, (req, res) => {
 
   const limit = Math.min(parseInt(req.query.limit) || 20, 100);
 
+  if (Number.isNaN(page) || page < 1) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid page value",
+    });
+  }
+
+  if (Number.isNaN(limit) || limit < 1) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid limit value",
+    });
+  }
+
   const offset = (page - 1) * limit;
+  console.log("[BOOKS] Request", { userId: req.user?.id, page, limit, offset });
 
   db.query(
 
     `
 
     SELECT
+
+      oldbookid,
 
       bookname,
 
@@ -1135,10 +1169,26 @@ app.get("/books", requireAuth, (req, res) => {
     (err, results) => {
 
       if (err) {
+        logError("BOOKS_QUERY", err, { userId: req.user?.id, page, limit, offset });
 
         return sendSilentError(res, 500, "BOOKS", err);
 
       }
+
+      if (!Array.isArray(results)) {
+        logError("BOOKS_RESULTS_INVALID", new Error("Books results are not an array"), {
+          userId: req.user?.id,
+          page,
+          limit,
+          offset,
+        });
+        return res.status(500).json({
+          success: false,
+          message: "Invalid books response from server",
+        });
+      }
+
+      console.log("[BOOKS] Success", { userId: req.user?.id, page, limit, count: results.length });
 
       return res.json({
 
@@ -1664,6 +1714,137 @@ app.post(
       }
     );
 
+  }
+);
+
+
+// ─── ADMIN: ADD BOOK ENTRY ─────────────────────
+
+app.get(
+  "/admin/subjects",
+  requireAuth,
+  requireSuperAdmin,
+  (req, res) => {
+    db.query(
+      `
+      SELECT idsubject, subject
+      FROM yii_subject
+      ORDER BY subject ASC
+      `,
+      (err, rows) => {
+        if (err) {
+          return sendSilentError(res, 500, "ADMIN_SUBJECTS", err);
+        }
+
+        return res.json({
+          success: true,
+          subjects: rows
+        });
+      }
+    );
+  }
+);
+
+app.post(
+  "/admin/add-book",
+  requireAuth,
+  requireSuperAdmin,
+  (req, res) => {
+    const {
+      idsubject,
+      bookname,
+      bookauthor,
+      bookpublisher,
+      bookshelf,
+      oldbookid
+    } = req.body || {};
+
+    const cleanSubject = Number(idsubject);
+    const cleanName = bookname?.trim();
+    const cleanAuthor = bookauthor?.trim();
+    const cleanPublisher = bookpublisher?.trim();
+    const cleanShelf = bookshelf?.trim();
+    const cleanOldBookId = oldbookid?.trim() || null;
+
+    if (!cleanSubject || cleanSubject < 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid subject ID is required"
+      });
+    }
+
+    if (!cleanName || !cleanAuthor || !cleanPublisher || !cleanShelf) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject, book name, author, publisher and shelf are required"
+      });
+    }
+
+    db.query(
+      "SELECT idsubject FROM yii_subject WHERE idsubject=? LIMIT 1",
+      [cleanSubject],
+      (subjectErr, subjectRows) => {
+        if (subjectErr) {
+          return sendSilentError(res, 500, "ADMIN_ADD_BOOK_SUBJECT", subjectErr);
+        }
+
+        if (!subjectRows.length) {
+          return res.status(404).json({
+            success: false,
+            message: "Subject not found"
+          });
+        }
+
+        db.query(
+          `
+            SELECT idbook
+            FROM yii_book
+            WHERE bookname=? AND bookauthor=? AND bookshelf=?
+            LIMIT 1
+          `,
+          [cleanName, cleanAuthor, cleanShelf],
+          (dupErr, dupRows) => {
+            if (dupErr) {
+              return sendSilentError(res, 500, "ADMIN_ADD_BOOK_DUP", dupErr);
+            }
+
+            if (dupRows.length) {
+              return res.status(409).json({
+                success: false,
+                message: "Book already exists for this author and shelf location"
+              });
+            }
+
+            db.query(
+          `
+            INSERT INTO yii_book
+            (
+              idsubject,
+              bookname,
+              bookauthor,
+              bookpublisher,
+              bookshelf,
+              oldbookid
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+          `,
+          [cleanSubject, cleanName, cleanAuthor, cleanPublisher, cleanShelf, cleanOldBookId],
+          (insertErr, insertResult) => {
+            if (insertErr) {
+              return sendSilentError(res, 500, "ADMIN_ADD_BOOK_INSERT", insertErr);
+            }
+
+            return res.json({
+              success: true,
+              message: "Book added successfully",
+              idbook: insertResult.insertId
+            });
+          }
+        );
+          }
+        );
+      }
+    );
   }
 );
 

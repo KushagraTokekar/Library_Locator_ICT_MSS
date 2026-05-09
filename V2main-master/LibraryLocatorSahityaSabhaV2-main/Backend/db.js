@@ -2,12 +2,15 @@ require("dotenv").config();
 const mysql = require("mysql2");
 
 const REQUIRED_DB_ENV = ["DB_HOST", "DB_USER", "DB_PASS", "DB_NAME"];
+const missingDbEnv = REQUIRED_DB_ENV.filter((key) => !process.env[key]);
 
-for (const key of REQUIRED_DB_ENV) {
-  if (!process.env[key]) {
-    console.error(`Missing ENV variable: ${key}`);
-    process.exit(1);
-  }
+if (missingDbEnv.length > 0) {
+  console.error("[Startup] Missing required database environment variables:");
+  missingDbEnv.forEach((key) => console.error(` - ${key}`));
+  console.error(
+    "[Startup] Create Backend/.env from Backend/.env.example and fill all DB_* values before running npm start."
+  );
+  process.exit(1);
 }
 
 const db = mysql.createPool({

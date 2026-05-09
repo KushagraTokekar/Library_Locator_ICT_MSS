@@ -29,6 +29,11 @@ type AdminUser = {
   created_at?: string;
 };
 
+type SubjectOption = {
+  idsubject: number;
+  subject: string;
+};
+
 export default function AdminScreen() {
   const { mode } = useThemeContext();
   const theme = Colors[mode];
@@ -41,6 +46,14 @@ export default function AdminScreen() {
   const [actionId, setActionId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
+  const [bookSubjectId, setBookSubjectId] = useState("");
+  const [bookName, setBookName] = useState("");
+  const [bookAuthor, setBookAuthor] = useState("");
+  const [bookPublisher, setBookPublisher] = useState("");
+  const [bookShelf, setBookShelf] = useState("");
+  const [bookOldId, setBookOldId] = useState("");
+  const [addingBook, setAddingBook] = useState(false);
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
 
   const currentUserId = user?.id ?? null;
 
@@ -57,7 +70,7 @@ export default function AdminScreen() {
       return;
     }
 
-    void loadUsers();
+    void Promise.all([loadUsers(), loadSubjects()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, token, isSuperAdmin]);
 
@@ -86,6 +99,17 @@ export default function AdminScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const loadSubjects = async () => {
+    try {
+      const res = await apiFetch("/admin/subjects");
+      if (!res.ok) return;
+      const payload = res.data;
+      setSubjects(Array.isArray(payload?.subjects) ? payload.subjects : []);
+    } catch {
+      // non-blocking for admin users page
     }
   };
 
@@ -199,6 +223,52 @@ export default function AdminScreen() {
     });
   }, [users, search]);
 
+  const handleAddBook = async () => {
+    const idsubject = Number(bookSubjectId.trim());
+    if (!idsubject || !bookName.trim() || !bookAuthor.trim() || !bookPublisher.trim() || !bookShelf.trim()) {
+      setError("Please fill all required book fields (Subject ID, Name, Author, Publisher, Shelf).");
+      return;
+    }
+
+    setAddingBook(true);
+    setError("");
+    try {
+      const res = await apiFetch("/admin/add-book", {
+        method: "POST",
+        body: JSON.stringify({
+          idsubject,
+          bookname: bookName.trim(),
+          bookauthor: bookAuthor.trim(),
+          bookpublisher: bookPublisher.trim(),
+          bookshelf: bookShelf.trim(),
+          oldbookid: bookOldId.trim() || null,
+        }),
+      });
+
+      if (!res.ok) {
+        setError(res.data?.message || "Failed to add book.");
+        return;
+      }
+
+      Alert.alert("Success", "Book added successfully.");
+      setBookSubjectId("");
+      setBookName("");
+      setBookAuthor("");
+      setBookPublisher("");
+      setBookShelf("");
+      setBookOldId("");
+    } catch (err: any) {
+      if (err?.message === "SESSION_EXPIRED" || err?.message === "UNAUTHORIZED") {
+        await logout();
+        router.replace("/login");
+        return;
+      }
+      setError("Failed to add book.");
+    } finally {
+      setAddingBook(false);
+    }
+  };
+
   if (isLoading || loading) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.background }]}>
@@ -268,6 +338,82 @@ export default function AdminScreen() {
           </Text>
           <Text style={[styles.statLabel, { color: theme.icon }]}>Super Admins</Text>
         </View>
+      </View>
+
+      <View style={[styles.addBookCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.addBookTitle, { color: theme.text }]}>Add Book Entry</Text>
+        <TextInput
+          value={bookSubjectId}
+          onChangeText={setBookSubjectId}
+          placeholder="Subject ID *"
+          placeholderTextColor={theme.icon}
+          keyboardType="number-pad"
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        {subjects.length > 0 ? (
+          <View style={styles.subjectChips}>
+            {subjects.slice(0, 20).map((item) => (
+              <TouchableOpacity
+                key={item.idsubject}
+                style={[
+                  styles.subjectChip,
+                  {
+                    borderColor: theme.border,
+                    backgroundColor:
+                      String(item.idsubject) === bookSubjectId.trim() ? "rgba(77,182,172,0.2)" : "transparent",
+                  },
+                ]}
+                onPress={() => setBookSubjectId(String(item.idsubject))}
+              >
+                <Text style={{ color: theme.text, fontSize: 12 }}>
+                  {item.idsubject} - {item.subject}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
+        <TextInput
+          value={bookName}
+          onChangeText={setBookName}
+          placeholder="Book Name *"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TextInput
+          value={bookAuthor}
+          onChangeText={setBookAuthor}
+          placeholder="Author *"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TextInput
+          value={bookPublisher}
+          onChangeText={setBookPublisher}
+          placeholder="Publisher *"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TextInput
+          value={bookShelf}
+          onChangeText={setBookShelf}
+          placeholder="Shelf Location *"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TextInput
+          value={bookOldId}
+          onChangeText={setBookOldId}
+          placeholder="Old Book ID (optional)"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TouchableOpacity
+          style={[styles.addBookBtn, { backgroundColor: theme.tint }]}
+          onPress={handleAddBook}
+          disabled={addingBook}
+        >
+          {addingBook ? <ActivityIndicator color="white" /> : <Text style={styles.actionText}>Add Book</Text>}
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -430,6 +576,43 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     marginBottom: 14,
+  },
+  addBookCard: {
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 14,
+  },
+  addBookTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 10,
+  },
+  addBookInput: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  subjectChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 8,
+  },
+  subjectChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  addBookBtn: {
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
   },
   statCard: {
     flex: 1,
