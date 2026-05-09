@@ -188,3 +188,49 @@ File-based routing makes it easy to add new screens — just create a new file i
 | App works on web but not on phone | Update `api.ts` with your PC's IP from `ipconfig` |
 | Search returns nothing | Check the database was imported correctly |
 | Token error after restart | Clear app storage and login again |
+
+---
+
+## Cloud Deployment (Render Free Tier)
+
+This repository includes a `render.yaml` at project root for one-click backend deployment to Render.
+
+### 1) Push repository to GitHub
+Render deploys from GitHub/GitLab.
+
+### 2) Create Render Blueprint
+- In Render dashboard choose **New +** → **Blueprint**.
+- Select this repository.
+- Render will detect:
+  - `rootDir: Backend`
+  - `buildCommand: npm install`
+  - `startCommand: npm start`
+  - `healthCheckPath: /health`
+
+### 3) Set environment variables
+Use `Backend/.env.example` as reference and set all required values in Render:
+- `JWT_SECRET`
+- `EMAIL_USER`
+- `EMAIL_PASS`
+- `DB_HOST`
+- `DB_USER`
+- `DB_PASS`
+- `DB_NAME`
+
+Optional but recommended:
+- `FRONTEND_URL`
+- `CORS_ORIGINS`
+- `DB_POOL_LIMIT`
+
+### 4) Configure CORS for your cloud frontend
+If your frontend is hosted on a cloud URL, add it to `FRONTEND_URL` or `CORS_ORIGINS`.
+Without this, API requests may be blocked by CORS.
+
+### 5) Verify deployment
+Open:
+`https://<your-render-service>.onrender.com/health`
+
+Expected:
+```json
+{ "status": "ok" }
+```
