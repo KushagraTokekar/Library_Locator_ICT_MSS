@@ -30,6 +30,7 @@ const getRecentSearchesKey = (userId?: number | string | null) =>
     : `recent_searches_${userId}`;
 
 type Book = {
+  oldbookid?: string;
   bookname: string;
   bookauthor: string;
   bookpublisher: string;
@@ -104,16 +105,19 @@ export default function Home() {
   };
 
   const fetchSuggestions = async (query: string) => {
+    const trimmedQuery = query.trim();
     setLoading(true);
     setError("");
     setHasSearched(true);
 
     try {
-      const res = await apiFetch(`/search?book=${encodeURIComponent(query)}`);
+      console.log("[HOME_SEARCH] Request", { query: trimmedQuery });
+      const res = await apiFetch(`/search?book=${encodeURIComponent(trimmedQuery)}`);
 
       if (!res.ok) {
         setSuggestions([]);
-        setError(res.data?.message || "Search failed.");
+        setError(res.data?.message || "Search failed. Please try again.");
+        console.log("[HOME_SEARCH] Non-OK response", { status: res.status, message: res.data?.message });
         return;
       }
 
@@ -122,11 +126,13 @@ export default function Home() {
       if (data.success && Array.isArray(data.data)) {
         setSuggestions(data.data.slice(0, 10));
         if (data.data.length === 0) {
-          setError(`No books found for "${query.trim()}".`);
+          setError(`No books found for "${trimmedQuery}".`);
         }
+        console.log("[HOME_SEARCH] Success", { query: trimmedQuery, count: data.data.length });
       } else {
         setSuggestions([]);
-        setError(data.message || "Search failed.");
+        setError(data.message || "Invalid search payload received.");
+        console.log("[HOME_SEARCH] Invalid payload", { payload: data });
       }
     } catch (err: any) {
       if (err?.message === "SESSION_EXPIRED" || err?.message === "UNAUTHORIZED") {
@@ -135,7 +141,8 @@ export default function Home() {
         return;
       }
       setSuggestions([]);
-      setError("Cannot connect to server.");
+      setError("Cannot connect to server. Please check your internet or backend service.");
+      console.log("[HOME_SEARCH] Error", err);
     } finally {
       setLoading(false);
     }
@@ -176,7 +183,10 @@ export default function Home() {
   };
 
   const copyShelf = async () => {
-    if (!result) return;
+    if (!result?.bookshelf) {
+      setError("Shelf location is not available for this book.");
+      return;
+    }
     await Clipboard.setStringAsync(result.bookshelf);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -298,6 +308,7 @@ export default function Home() {
                   </Text>
                   <Text style={{ color: theme.icon, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
                     {item.bookauthor} · {item.subject}
+                    {item.oldbookid ? ` · Old ID: ${item.oldbookid}` : ""}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={14} color={theme.border} />
@@ -347,6 +358,18 @@ export default function Home() {
                 <Text style={[styles.infoValue, { color: theme.text }]}>{result.bookpublisher}</Text>
               </View>
             </View>
+
+            {result.oldbookid ? (
+              <View style={styles.infoRow}>
+                <View style={[styles.infoIcon, { backgroundColor: theme.background }]}>
+                  <Ionicons name="pricetag-outline" size={15} color={theme.tint} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.infoLabel, { color: theme.icon }]}>Old Book ID</Text>
+                  <Text style={[styles.infoValue, { color: theme.text }]}>{result.oldbookid}</Text>
+                </View>
+              </View>
+            ) : null}
 
             <TouchableOpacity
               style={[styles.shelfContainer, { backgroundColor: theme.tint }]}
