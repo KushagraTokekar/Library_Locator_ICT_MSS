@@ -1,20 +1,55 @@
 require("dotenv").config();
 const mysql = require("mysql2");
 
-const REQUIRED_DB_ENV = ["DB_HOST", "DB_USER", "DB_PASS", "DB_NAME"];
+const DB_ENV_ALIASES = {
+  DB_HOST: ["DB_HOST", "DB_Host", "db_host"],
+  DB_USER: ["DB_USER", "DB_User", "db_user"],
+  DB_PASS: ["DB_PASS", "DB_Pass", "db_pass"],
+  DB_NAME: ["DB_NAME", "DB_Name", "db_name"],
+};
 
-for (const key of REQUIRED_DB_ENV) {
-  if (!process.env[key]) {
-    console.error(`Missing ENV variable: ${key}`);
-    process.exit(1);
+function resolveEnvValue(keys = []) {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
   }
+  return "";
+}
+
+const dbConfig = {
+  host: resolveEnvValue(DB_ENV_ALIASES.DB_HOST),
+  user: resolveEnvValue(DB_ENV_ALIASES.DB_USER),
+  password: resolveEnvValue(DB_ENV_ALIASES.DB_PASS),
+  database: resolveEnvValue(DB_ENV_ALIASES.DB_NAME),
+};
+
+const missingDbEnv = Object.entries({
+  DB_HOST: dbConfig.host,
+  DB_USER: dbConfig.user,
+  DB_PASS: dbConfig.password,
+  DB_NAME: dbConfig.database,
+})
+  .filter(([, value]) => !value)
+  .map(([key]) => key);
+
+if (missingDbEnv.length > 0) {
+  console.error("[Startup] Missing required database environment variables:");
+  missingDbEnv.forEach((key) => {
+    console.error(` - ${key} (accepted aliases: ${DB_ENV_ALIASES[key].join(", ")})`);
+  });
+  console.error(
+    "[Startup] Create Backend/.env from Backend/.env.example and set DB_HOST/DB_USER/DB_PASS/DB_NAME before running npm start."
+  );
+  process.exit(1);
 }
 
 const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
+  host: dbConfig.host,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
 
   waitForConnections: true,
   connectionLimit: Number(process.env.DB_POOL_LIMIT) || 10,

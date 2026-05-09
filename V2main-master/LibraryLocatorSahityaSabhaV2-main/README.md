@@ -23,19 +23,21 @@ mysql -u root -proot < database/mssindor_yiilibrary.sql
 ```
 > Replace `-proot` with your actual MySQL password, e.g. `-pmypassword`
 
-### 3. Run the backend
+### 3. Configure backend environment
 ```bash
 cd Backend
-npm install
-node server.js
-```
-You should see:
-```
-[SERVER] Running on port 3000
-[DB] MySQL connected.
+cp .env.example .env
+# edit .env and set real DB_HOST/DB_USER/DB_PASS/DB_NAME + JWT/EMAIL values
 ```
 
-### 4. Update the API URL
+### 4. Run the backend
+```bash
+npm install
+npm start
+```
+If required DB variables are missing, startup now prints exactly which keys are missing and how to fix them.
+
+### 5. Update the API URL
 Open `Mobile-app/constants/api.ts` and set your machine's IP:
 ```ts
 export const API_BASE = "http://localhost:3000"; // web only
@@ -43,7 +45,7 @@ export const API_BASE = "http://localhost:3000"; // web only
 export const API_BASE = "http://192.168.X.X:3000"; // get IP from ipconfig
 ```
 
-### 5. Run the app
+### 6. Run the app
 ```bash
 cd Mobile-app
 npm install
@@ -188,3 +190,73 @@ File-based routing makes it easy to add new screens — just create a new file i
 | App works on web but not on phone | Update `api.ts` with your PC's IP from `ipconfig` |
 | Search returns nothing | Check the database was imported correctly |
 | Token error after restart | Clear app storage and login again |
+
+---
+
+## Local Development (No Render)
+
+If you only want to run on your local machine, you can ignore `render.yaml` completely.
+
+### Backend (local)
+```bash
+cd Backend
+cp .env.example .env
+# set DB_HOST=localhost and fill DB_USER/DB_PASS/DB_NAME/JWT_SECRET/EMAIL_USER/EMAIL_PASS
+npm install
+npm start
+```
+
+### Mobile app (local)
+```bash
+cd Mobile-app
+npm install
+npm start
+```
+
+Use `http://localhost:3000/health` to verify backend is up.
+
+---
+
+## Cloud Deployment (Render Free Tier, Optional)
+
+This repository includes a `render.yaml` at project root for one-click backend deployment to Render.
+
+### 1) Push repository to GitHub
+Render deploys from GitHub/GitLab.
+
+### 2) Create Render Blueprint
+- In Render dashboard choose **New +** → **Blueprint**.
+- Select this repository.
+- Render will detect:
+  - `rootDir: Backend`
+  - `buildCommand: npm install`
+  - `startCommand: npm start`
+  - `healthCheckPath: /health`
+
+### 3) Set environment variables
+Use `Backend/.env.example` as reference and set all required values in Render:
+- `JWT_SECRET`
+- `EMAIL_USER`
+- `EMAIL_PASS`
+- `DB_HOST`
+- `DB_USER`
+- `DB_PASS`
+- `DB_NAME`
+
+Optional but recommended:
+- `FRONTEND_URL`
+- `CORS_ORIGINS`
+- `DB_POOL_LIMIT`
+
+### 4) Configure CORS for your cloud frontend
+If your frontend is hosted on a cloud URL, add it to `FRONTEND_URL` or `CORS_ORIGINS`.
+Without this, API requests may be blocked by CORS.
+
+### 5) Verify deployment
+Open:
+`https://<your-render-service>.onrender.com/health`
+
+Expected:
+```json
+{ "status": "ok" }
+```
