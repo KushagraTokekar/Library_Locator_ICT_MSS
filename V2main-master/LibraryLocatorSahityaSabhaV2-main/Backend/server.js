@@ -1720,6 +1720,31 @@ app.post(
 
 // ─── ADMIN: ADD BOOK ENTRY ─────────────────────
 
+app.get(
+  "/admin/subjects",
+  requireAuth,
+  requireSuperAdmin,
+  (req, res) => {
+    db.query(
+      `
+      SELECT idsubject, subject
+      FROM yii_subject
+      ORDER BY subject ASC
+      `,
+      (err, rows) => {
+        if (err) {
+          return sendSilentError(res, 500, "ADMIN_SUBJECTS", err);
+        }
+
+        return res.json({
+          success: true,
+          subjects: rows
+        });
+      }
+    );
+  }
+);
+
 app.post(
   "/admin/add-book",
   requireAuth,
@@ -1772,6 +1797,26 @@ app.post(
 
         db.query(
           `
+            SELECT idbook
+            FROM yii_book
+            WHERE bookname=? AND bookauthor=? AND bookshelf=?
+            LIMIT 1
+          `,
+          [cleanName, cleanAuthor, cleanShelf],
+          (dupErr, dupRows) => {
+            if (dupErr) {
+              return sendSilentError(res, 500, "ADMIN_ADD_BOOK_DUP", dupErr);
+            }
+
+            if (dupRows.length) {
+              return res.status(409).json({
+                success: false,
+                message: "Book already exists for this author and shelf location"
+              });
+            }
+
+            db.query(
+          `
             INSERT INTO yii_book
             (
               idsubject,
@@ -1794,6 +1839,8 @@ app.post(
               message: "Book added successfully",
               idbook: insertResult.insertId
             });
+          }
+        );
           }
         );
       }

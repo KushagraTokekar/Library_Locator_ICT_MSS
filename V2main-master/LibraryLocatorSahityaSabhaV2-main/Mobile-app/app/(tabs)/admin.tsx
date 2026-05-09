@@ -29,6 +29,11 @@ type AdminUser = {
   created_at?: string;
 };
 
+type SubjectOption = {
+  idsubject: number;
+  subject: string;
+};
+
 export default function AdminScreen() {
   const { mode } = useThemeContext();
   const theme = Colors[mode];
@@ -48,6 +53,7 @@ export default function AdminScreen() {
   const [bookShelf, setBookShelf] = useState("");
   const [bookOldId, setBookOldId] = useState("");
   const [addingBook, setAddingBook] = useState(false);
+  const [subjects, setSubjects] = useState<SubjectOption[]>([]);
 
   const currentUserId = user?.id ?? null;
 
@@ -64,7 +70,7 @@ export default function AdminScreen() {
       return;
     }
 
-    void loadUsers();
+    void Promise.all([loadUsers(), loadSubjects()]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, token, isSuperAdmin]);
 
@@ -93,6 +99,17 @@ export default function AdminScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const loadSubjects = async () => {
+    try {
+      const res = await apiFetch("/admin/subjects");
+      if (!res.ok) return;
+      const payload = res.data;
+      setSubjects(Array.isArray(payload?.subjects) ? payload.subjects : []);
+    } catch {
+      // non-blocking for admin users page
     }
   };
 
@@ -333,6 +350,28 @@ export default function AdminScreen() {
           keyboardType="number-pad"
           style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
         />
+        {subjects.length > 0 ? (
+          <View style={styles.subjectChips}>
+            {subjects.slice(0, 20).map((item) => (
+              <TouchableOpacity
+                key={item.idsubject}
+                style={[
+                  styles.subjectChip,
+                  {
+                    borderColor: theme.border,
+                    backgroundColor:
+                      String(item.idsubject) === bookSubjectId.trim() ? "rgba(77,182,172,0.2)" : "transparent",
+                  },
+                ]}
+                onPress={() => setBookSubjectId(String(item.idsubject))}
+              >
+                <Text style={{ color: theme.text, fontSize: 12 }}>
+                  {item.idsubject} - {item.subject}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
         <TextInput
           value={bookName}
           onChangeText={setBookName}
@@ -555,6 +594,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 8,
+  },
+  subjectChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginBottom: 8,
+  },
+  subjectChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   addBookBtn: {
     borderRadius: 10,
