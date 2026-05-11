@@ -306,22 +306,6 @@ export default function AdminScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={[styles.searchBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Ionicons name="search-outline" size={18} color={theme.icon} />
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search users by email or ID"
-          placeholderTextColor={theme.icon}
-          style={[styles.searchInput, { color: theme.text }]}
-        />
-        {search.length > 0 ? (
-          <TouchableOpacity onPress={() => setSearch("")}>
-            <Ionicons name="close-circle" size={18} color={theme.icon} />
-          </TouchableOpacity>
-        ) : null}
-      </View>
-
       <View style={[styles.modeSwitcher, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <TouchableOpacity
           style={[styles.modeBtn, adminView === "users" && { backgroundColor: theme.tint }]}
@@ -344,96 +328,116 @@ export default function AdminScreen() {
         </View>
       ) : null}
 
-      <View style={styles.statsRow}>
-        <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.statNumber, { color: theme.tint }]}>{users.length}</Text>
-          <Text style={[styles.statLabel, { color: theme.icon }]}>Total Users</Text>
-        </View>
+      {adminView === "users" ? (
+        <>
+          <View style={[styles.searchBox, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Ionicons name="search-outline" size={18} color={theme.icon} />
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search users by email or ID"
+              placeholderTextColor={theme.icon}
+              style={[styles.searchInput, { color: theme.text }]}
+            />
+            {search.length > 0 ? (
+              <TouchableOpacity onPress={() => setSearch("")}>
+                <Ionicons name="close-circle" size={18} color={theme.icon} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
 
-        <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.statNumber, { color: theme.tint }]}>
-            {users.filter((u) => Number(u.superuser) === 1).length}
-          </Text>
-          <Text style={[styles.statLabel, { color: theme.icon }]}>Super Admins</Text>
-        </View>
-      </View>
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <Text style={[styles.statNumber, { color: theme.tint }]}>{users.length}</Text>
+              <Text style={[styles.statLabel, { color: theme.icon }]}>Total Users</Text>
+            </View>
+
+            <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <Text style={[styles.statNumber, { color: theme.tint }]}>
+                {users.filter((u) => Number(u.superuser) === 1).length}
+              </Text>
+              <Text style={[styles.statLabel, { color: theme.icon }]}>Super Admins</Text>
+            </View>
+          </View>
+        </>
+      ) : null}
 
       {adminView === "addBook" ? (
-      <View style={[styles.addBookCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Text style={[styles.addBookTitle, { color: theme.text }]}>Add Book Entry</Text>
-        <TextInput
-          value={bookSubjectId}
-          onChangeText={setBookSubjectId}
-          placeholder="Subject ID *"
-          placeholderTextColor={theme.icon}
-          keyboardType="number-pad"
-          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
-        />
-        {subjects.length > 0 ? (
-          <View style={styles.subjectChips}>
-            {subjects.slice(0, 20).map((item) => (
-              <TouchableOpacity
-                key={item.idsubject}
-                style={[
-                  styles.subjectChip,
-                  {
-                    borderColor: theme.border,
-                    backgroundColor:
-                      String(item.idsubject) === bookSubjectId.trim() ? "rgba(77,182,172,0.2)" : "transparent",
-                  },
-                ]}
-                onPress={() => setBookSubjectId(String(item.idsubject))}
-              >
-                <Text style={{ color: theme.text, fontSize: 12 }}>
-                  {item.idsubject} - {item.subject}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : null}
-        <TextInput
-          value={bookName}
-          onChangeText={setBookName}
-          placeholder="Book Name *"
-          placeholderTextColor={theme.icon}
-          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
-        />
-        <TextInput
-          value={bookAuthor}
-          onChangeText={setBookAuthor}
-          placeholder="Author *"
-          placeholderTextColor={theme.icon}
-          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
-        />
-        <TextInput
-          value={bookPublisher}
-          onChangeText={setBookPublisher}
-          placeholder="Publisher *"
-          placeholderTextColor={theme.icon}
-          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
-        />
-        <TextInput
-          value={bookShelf}
-          onChangeText={setBookShelf}
-          placeholder="Shelf Location *"
-          placeholderTextColor={theme.icon}
-          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
-        />
-        <TextInput
-          value={bookOldId}
-          onChangeText={setBookOldId}
-          placeholder="Old Book ID (optional)"
-          placeholderTextColor={theme.icon}
-          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
-        />
-        <TouchableOpacity
-          style={[styles.addBookBtn, { backgroundColor: theme.tint }]}
-          onPress={handleAddBook}
-          disabled={addingBook}
-        >
-          {addingBook ? <ActivityIndicator color="white" /> : <Text style={styles.actionText}>Add Book</Text>}
-        </TouchableOpacity>
-      </View>
+        <View style={[styles.addBookCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.addBookTitle, { color: theme.text }]}>Add Book Entry</Text>
+          <TextInput
+            value={bookSubjectId}
+            onChangeText={setBookSubjectId}
+            placeholder="Subject ID *"
+            placeholderTextColor={theme.icon}
+            keyboardType="number-pad"
+            style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+          />
+          {subjects.length > 0 ? (
+            <View style={styles.subjectChips}>
+              {subjects.slice(0, 20).map((item) => (
+                <TouchableOpacity
+                  key={item.idsubject}
+                  style={[
+                    styles.subjectChip,
+                    {
+                      borderColor: theme.border,
+                      backgroundColor:
+                        String(item.idsubject) === bookSubjectId.trim() ? "rgba(77,182,172,0.2)" : "transparent",
+                    },
+                  ]}
+                  onPress={() => setBookSubjectId(String(item.idsubject))}
+                >
+                  <Text style={{ color: theme.text, fontSize: 12 }}>
+                    {item.idsubject} - {item.subject}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
+          <TextInput
+            value={bookName}
+            onChangeText={setBookName}
+            placeholder="Book Name *"
+            placeholderTextColor={theme.icon}
+            style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+          />
+          <TextInput
+            value={bookAuthor}
+            onChangeText={setBookAuthor}
+            placeholder="Author *"
+            placeholderTextColor={theme.icon}
+            style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+          />
+          <TextInput
+            value={bookPublisher}
+            onChangeText={setBookPublisher}
+            placeholder="Publisher *"
+            placeholderTextColor={theme.icon}
+            style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+          />
+          <TextInput
+            value={bookShelf}
+            onChangeText={setBookShelf}
+            placeholder="Shelf Location *"
+            placeholderTextColor={theme.icon}
+            style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+          />
+          <TextInput
+            value={bookOldId}
+            onChangeText={setBookOldId}
+            placeholder="Old Book ID (optional)"
+            placeholderTextColor={theme.icon}
+            style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+          />
+          <TouchableOpacity
+            style={[styles.addBookBtn, { backgroundColor: theme.tint }]}
+            onPress={handleAddBook}
+            disabled={addingBook}
+          >
+            {addingBook ? <ActivityIndicator color="white" /> : <Text style={styles.actionText}>Add Book</Text>}
+          </TouchableOpacity>
+        </View>
       ) : null}
 
       {adminView === "users" ? (
