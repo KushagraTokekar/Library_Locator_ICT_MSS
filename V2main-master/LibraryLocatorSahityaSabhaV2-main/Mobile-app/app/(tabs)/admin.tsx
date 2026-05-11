@@ -34,6 +34,8 @@ type SubjectOption = {
   subject: string;
 };
 
+type AdminViewMode = "users" | "addBook";
+
 export default function AdminScreen() {
   const { mode } = useThemeContext();
   const theme = Colors[mode];
@@ -54,6 +56,7 @@ export default function AdminScreen() {
   const [bookOldId, setBookOldId] = useState("");
   const [addingBook, setAddingBook] = useState(false);
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+  const [adminView, setAdminView] = useState<AdminViewMode>("users");
 
   const currentUserId = user?.id ?? null;
 
@@ -291,7 +294,7 @@ export default function AdminScreen() {
         <View>
           <Text style={[styles.title, { color: theme.text }]}>Super Admin Panel</Text>
           <Text style={[styles.subtitle, { color: theme.icon }]}>
-            Manage users and privileges
+            Manage users and books
           </Text>
         </View>
 
@@ -319,6 +322,21 @@ export default function AdminScreen() {
         ) : null}
       </View>
 
+      <View style={[styles.modeSwitcher, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <TouchableOpacity
+          style={[styles.modeBtn, adminView === "users" && { backgroundColor: theme.tint }]}
+          onPress={() => setAdminView("users")}
+        >
+          <Text style={[styles.modeBtnText, { color: adminView === "users" ? "white" : theme.text }]}>View Users</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.modeBtn, adminView === "addBook" && { backgroundColor: theme.tint }]}
+          onPress={() => setAdminView("addBook")}
+        >
+          <Text style={[styles.modeBtnText, { color: adminView === "addBook" ? "white" : theme.text }]}>Add Book</Text>
+        </TouchableOpacity>
+      </View>
+
       {error ? (
         <View style={styles.errorBox}>
           <Ionicons name="alert-circle-outline" size={16} color="#e53935" />
@@ -340,6 +358,7 @@ export default function AdminScreen() {
         </View>
       </View>
 
+      {adminView === "addBook" ? (
       <View style={[styles.addBookCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <Text style={[styles.addBookTitle, { color: theme.text }]}>Add Book Entry</Text>
         <TextInput
@@ -415,7 +434,9 @@ export default function AdminScreen() {
           {addingBook ? <ActivityIndicator color="white" /> : <Text style={styles.actionText}>Add Book</Text>}
         </TouchableOpacity>
       </View>
+      ) : null}
 
+      {adminView === "users" ? (
       <FlatList
         data={filteredUsers}
         keyExtractor={(item) => String(item.id)}
@@ -506,6 +527,7 @@ export default function AdminScreen() {
           );
         }}
       />
+      ) : null}
     </View>
   );
 }
@@ -556,6 +578,25 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
     paddingVertical: 0,
+  },
+  modeSwitcher: {
+    flexDirection: "row",
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 12,
+    gap: 6,
+  },
+  modeBtn: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modeBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
   },
   errorBox: {
     flexDirection: "row",
