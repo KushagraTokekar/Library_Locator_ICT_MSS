@@ -34,8 +34,11 @@ type SubjectOption = {
   subject: string;
 };
 
+ codex/analyze-yii_book-repo-and-database-schema-x3a3sb
 type AdminViewMode = "users" | "addBook";
 
+
+ main
 export default function AdminScreen() {
   const { mode } = useThemeContext();
   const theme = Colors[mode];
@@ -56,7 +59,10 @@ export default function AdminScreen() {
   const [bookOldId, setBookOldId] = useState("");
   const [addingBook, setAddingBook] = useState(false);
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
+ codex/analyze-yii_book-repo-and-database-schema-x3a3sb
   const [adminView, setAdminView] = useState<AdminViewMode>("users");
+
+ main
 
   const currentUserId = user?.id ?? null;
 
@@ -440,7 +446,86 @@ export default function AdminScreen() {
         </View>
       ) : null}
 
+ codex/analyze-yii_book-repo-and-database-schema-x3a3sb
       {adminView === "users" ? (
+
+      <View style={[styles.addBookCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.addBookTitle, { color: theme.text }]}>Add Book Entry</Text>
+        <TextInput
+          value={bookSubjectId}
+          onChangeText={setBookSubjectId}
+          placeholder="Subject ID *"
+          placeholderTextColor={theme.icon}
+          keyboardType="number-pad"
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        {subjects.length > 0 ? (
+          <View style={styles.subjectChips}>
+            {subjects.slice(0, 20).map((item) => (
+              <TouchableOpacity
+                key={item.idsubject}
+                style={[
+                  styles.subjectChip,
+                  {
+                    borderColor: theme.border,
+                    backgroundColor:
+                      String(item.idsubject) === bookSubjectId.trim() ? "rgba(77,182,172,0.2)" : "transparent",
+                  },
+                ]}
+                onPress={() => setBookSubjectId(String(item.idsubject))}
+              >
+                <Text style={{ color: theme.text, fontSize: 12 }}>
+                  {item.idsubject} - {item.subject}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
+        <TextInput
+          value={bookName}
+          onChangeText={setBookName}
+          placeholder="Book Name *"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TextInput
+          value={bookAuthor}
+          onChangeText={setBookAuthor}
+          placeholder="Author *"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TextInput
+          value={bookPublisher}
+          onChangeText={setBookPublisher}
+          placeholder="Publisher *"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TextInput
+          value={bookShelf}
+          onChangeText={setBookShelf}
+          placeholder="Shelf Location *"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TextInput
+          value={bookOldId}
+          onChangeText={setBookOldId}
+          placeholder="Old Book ID (optional)"
+          placeholderTextColor={theme.icon}
+          style={[styles.addBookInput, { color: theme.text, borderColor: theme.border }]}
+        />
+        <TouchableOpacity
+          style={[styles.addBookBtn, { backgroundColor: theme.tint }]}
+          onPress={handleAddBook}
+          disabled={addingBook}
+        >
+          {addingBook ? <ActivityIndicator color="white" /> : <Text style={styles.actionText}>Add Book</Text>}
+        </TouchableOpacity>
+      </View>
+
+ main
       <FlatList
         data={filteredUsers}
         keyExtractor={(item) => String(item.id)}

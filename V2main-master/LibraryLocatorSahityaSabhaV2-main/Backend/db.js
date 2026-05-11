@@ -1,6 +1,7 @@
 require("dotenv").config();
 const mysql = require("mysql2");
 
+ codex/analyze-yii_book-repo-and-database-schema-x3a3sb
 const DB_ENV_ALIASES = {
   DB_HOST: ["DB_HOST", "DB_Host", "db_host"],
   DB_USER: ["DB_USER", "DB_User", "db_user"],
@@ -41,6 +42,16 @@ if (missingDbEnv.length > 0) {
   });
   console.error(
     "[Startup] Create Backend/.env from Backend/.env.example and set DB_HOST/DB_USER/DB_PASS/DB_NAME before running npm start."
+
+const REQUIRED_DB_ENV = ["DB_HOST", "DB_USER", "DB_PASS", "DB_NAME"];
+const missingDbEnv = REQUIRED_DB_ENV.filter((key) => !process.env[key]);
+
+if (missingDbEnv.length > 0) {
+  console.error("[Startup] Missing required database environment variables:");
+  missingDbEnv.forEach((key) => console.error(` - ${key}`));
+  console.error(
+    "[Startup] Create Backend/.env from Backend/.env.example and fill all DB_* values before running npm start."
+ main
   );
   process.exit(1);
 }
